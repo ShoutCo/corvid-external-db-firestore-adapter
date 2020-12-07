@@ -6,7 +6,7 @@ const Firestore = require('@google-cloud/firestore');
 
 exports.find = async payload => {
 
-    //console.log('got payload: ' + JSON.stringify(payload));
+    console.log('got payload: ' + JSON.stringify(payload));
     const query = { collectionName, filter, sort, skip, limit } = payload;
     if (!query.collectionName)
         throw new BadRequestError('Missing collectionName in request body')
@@ -28,7 +28,7 @@ exports.get = async payload => {
     if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
     if (!itemId) throw new BadRequestError('Missing itemId in request body');
 
-    // console.log('get: ' + JSON.stringify(payload));
+    console.log('get: ' + JSON.stringify(payload));
 
     const document = await client.get(collectionName, itemId);
 
@@ -49,7 +49,7 @@ exports.insert = async payload => {
     if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
     if (!item) throw new BadRequestError('Missing item in request body');
 
-    // console.log('insert: ' + JSON.stringify(payload));
+    console.log('insert: ' + JSON.stringify(payload));
 
     if (!item._id) item._id = uuid();
     await client.insert(collectionName, extractDates(item));
@@ -62,7 +62,7 @@ exports.update = async payload => {
     if (!collectionName) throw new BadRequestError('Missing collectionName in request body');
     if (!item) throw new BadRequestError('Missing item in request body');
 
-    // console.log('update: ' + JSON.stringify(payload));
+    console.log('update: ' + JSON.stringify(payload));
 
     await client.update(collectionName, extractDates(item));
 
