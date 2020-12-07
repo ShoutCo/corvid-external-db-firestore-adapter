@@ -3,13 +3,17 @@ const EMPTY = '';
 
 exports.parseFilter = (filter, query) => {
   if (filter && filter.operator) {
-    return  parseInternal(filter, query);
+    let parsed = parseInternal(filter, query, true);
+    if (parsed.operator && parsed.operator === '$urlized') {
+      return parseInternal(query.doc(parsed.value))
+    }
+    return parsed;
     //return parsed ? `WHERE ${parsed}` : EMPTY;
   }
   return query;
 };
 
-const parseInternal = (filter, query) => {
+const parseInternal = (filter, query, returnFilterOnUrlized) => {
 
   switch (filter.operator) {
 
@@ -21,7 +25,7 @@ const parseInternal = (filter, query) => {
       //return value ? `(${value})` : value;
       return fiteredQuery;
     }
-    
+
     case '$or': {
       const value = filter.value.map(parseInternal).join(' OR ');
       return value ? `(${value})` : value;
@@ -46,16 +50,17 @@ const parseInternal = (filter, query) => {
         .map(mapValue)
         .map(date => date)
         .join(', ')
-      return list ? `${filter.fieldName} IN (${list})` : EMPTY
+      return list ? query.where(`${filter.fieldName}`, 'array-contains-any', list) : query;
     }
     case '$urlized': {
-      const list = filter.value.map(s => s.toLowerCase()).join('[- ]')
-      return list ? `LOWER(${filter.fieldName}) RLIKE '${list}'` : EMPTY
+      return returnFilterOnUrlized ? filter : query;
+      // const list = filter.value.map(s => s.toLowerCase()).join('[- ]')
+      // return list ? `LOWER(${filter.fieldName}) RLIKE '${list}'` : EMPTY
     }
-    case '$startsWith':
-      return `${filter.fieldName} LIKE ${mysql.escape(`${filter.value}%`)}`
-    case '$endsWith':
-      return `${filter.fieldName} LIKE ${mysql.escape(`%${filter.value}`)}`
+    // case '$startsWith':
+    //   return `${filter.fieldName} LIKE ${mysql.escape(`${filter.value}%`)}`
+    // case '$endsWith':
+    //   return `${filter.fieldName} LIKE ${mysql.escape(`%${filter.value}`)}`
     case '$eq': {
       return filter.value === null || filter.value === undefined
         ? `${filter.fieldName} IS NULL`

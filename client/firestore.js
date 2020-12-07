@@ -17,7 +17,7 @@ exports.query = (query) => {
   const collRef = firestore.collection(query.collectionName);
 
   let fsQuery = parseSort(query.sort, collRef);  
-  fsQuery = parseFilter(query.filter, fsQuery);
+  fsQuery = parseFilter(query.filter, fsQuery, collRef);
   
   if (query.select){
     fsQuery = fsQuery.select(query.select);
