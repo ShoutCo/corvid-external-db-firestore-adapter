@@ -48,14 +48,14 @@ const parseInternal = (filter, query) => {
         .join(', ')
       return list ? `${filter.fieldName} IN (${list})` : EMPTY
     }
-    // case '$urlized': {
-    //   const list = filter.value.map(s => s.toLowerCase()).join('[- ]')
-    //   return list ? `LOWER(${filter.fieldName}) RLIKE '${list}'` : EMPTY
-    // }
-    // case '$startsWith':
-    //   return `${filter.fieldName} LIKE ${mysql.escape(`${filter.value}%`)}`
-    // case '$endsWith':
-    //   return `${filter.fieldName} LIKE ${mysql.escape(`%${filter.value}`)}`
+    case '$urlized': {
+      const list = filter.value.map(s => s.toLowerCase()).join('[- ]')
+      return list ? `LOWER(${filter.fieldName}) RLIKE '${list}'` : EMPTY
+    }
+    case '$startsWith':
+      return `${filter.fieldName} LIKE ${mysql.escape(`${filter.value}%`)}`
+    case '$endsWith':
+      return `${filter.fieldName} LIKE ${mysql.escape(`%${filter.value}`)}`
     case '$eq': {
       return filter.value === null || filter.value === undefined
         ? `${filter.fieldName} IS NULL`
