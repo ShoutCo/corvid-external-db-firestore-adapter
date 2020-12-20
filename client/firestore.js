@@ -5,15 +5,17 @@ const AlreadyExistsError = require('../model/error/already-exists');
 const { parseFilter } = require('./support/filter-parser')
 const { parseSort } = require('./support/sort-parser')
 
+const FIELDNAME_FROM = 'from';
+const FIELDNAME_TO = 'to';
+
 const firestore = new Firestore({
   // client_email: serviceAccount.client_email,
   // private_key: serviceAccount.private_key,
   // projectId: serviceAccount.project_id,
 });
 
-exports.query = (query) => {
+exports.query = (query, userId) => {
 
-  console.log('got query: ' + JSON.stringify(query));
   const collRef = firestore.collection(query.collectionName);
 
   let fsQuery = parseSort(query.sort, collRef);  
@@ -22,11 +24,15 @@ exports.query = (query) => {
   if (query.select){
     fsQuery = fsQuery.select(query.select);
   }
-  
-  return fsQuery
-    .limit(query.limit)
-    .offset(query.skip)
-    .get()
+
+  fsQuery = fsQuery
+      .limit(query.limit)
+      .offset(query.skip);
+
+  return Promise.all([
+      fsQuery.where(FIELDNAME_FROM, '==', userId).get(),
+      fsQuery.where(FIELDNAME_TO, '==', userId).get()
+  ]);
 };
 
 exports.get = (collectionName, itemId) => {

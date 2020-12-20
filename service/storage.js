@@ -7,15 +7,22 @@ const Firestore = require('@google-cloud/firestore');
 exports.find = async payload => {
 
     console.log('got payload: ' + JSON.stringify(payload));
-    const query = { collectionName, filter, sort, skip, limit } = payload;
+    const query = {collectionName, filter, sort, skip, limit} = payload;
     if (!query.collectionName)
         throw new BadRequestError('Missing collectionName in request body')
     if (!query.skip && query.skip !== 0)
         throw new BadRequestError('Missing skip in request body')
     if (!query.limit) throw new BadRequestError('Missing limit in request body')
+    if (!payload.requestContext || !payload.requestContext.memberId)
+        throw new BadRequestError('No userId / memberId provided! This should never happen when called from Wix.')
 
-    const results = await client.query(query);
-    const enhanced = results.docs.map(doc => { return wrapDates({ ...doc.data(), _id: doc.id }) })
+    const results = await client.query(query, payload.requestContext.memberId);
+
+    const enhanced = results.map(
+        r => r.docs.map(
+            doc => wrapDates({...doc.data(), _id: doc.id})
+        )
+    ).flat();
 
     return {
         items: enhanced,
