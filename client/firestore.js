@@ -14,24 +14,30 @@ const firestore = new Firestore({
   // projectId: serviceAccount.project_id,
 });
 
+const adminUserIds = ['0b951edf-5212-4657-ac87-f32f3a01c3ad'];
+
 exports.query = (query, userId) => {
 
   const collRef = firestore.collection(query.collectionName);
 
-  let fsQuery = parseSort(query.sort, collRef);  
+  let fsQuery = parseSort(query.sort, collRef);
   fsQuery = parseFilter(query.filter, fsQuery, collRef);
-  
-  if (query.select){
+
+  if (query.select) {
     fsQuery = fsQuery.select(query.select);
   }
 
   fsQuery = fsQuery
-      .limit(query.limit)
-      .offset(query.skip);
+    .limit(query.limit)
+    .offset(query.skip);
+
+  if (adminUserIds.includes(userId)) {
+    return Promise.all([fsQuery.get()]);
+  }
 
   return Promise.all([
-      fsQuery.where(FIELDNAME_FROM, '==', userId).get(),
-      fsQuery.where(FIELDNAME_TO, '==', userId).get()
+    fsQuery.where(FIELDNAME_FROM, '==', userId).get(),
+    fsQuery.where(FIELDNAME_TO, '==', userId).get()
   ]);
 };
 
@@ -65,10 +71,10 @@ exports.delete = async (collectionName, itemId) => {
 exports.update = async (collectionName, item, merge = true) => {
 
   //console.log('got update: ' + JSON.stringify(item));
-  
+
   try {
     const reference = firestore.doc(`${collectionName}/${item._id}`);
-    await reference.set(item, {merge: merge});
+    await reference.set(item, { merge: merge });
 
   } catch (e) {
     switch (e.code) {
@@ -95,7 +101,7 @@ exports.insert = async (collectionName, item) => {
 };
 
 const getFirstDoc = async (collectionName) => {
-  
+
   const collectionRef = firestore.collection(collectionName).limit(1);
 
   const doc = await collectionRef.get();
@@ -149,12 +155,12 @@ const jsonFieldsToCorvidFields = columns => {
 const jsonValueTypeToCorvid = val => {
 
   const type = typeof val;
-  
+
   switch (type) {
     case 'string':
       return 'text'
-    case 'object':      
-      if (val instanceof Firestore.Timestamp){
+    case 'object':
+      if (val instanceof Firestore.Timestamp) {
         return 'datetime'
       }
     default:
